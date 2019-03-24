@@ -1,5 +1,7 @@
 package dli
 
+import "io"
+
 type Login interface {
 	Login(username, password string) error
 	SetCookies(cookies string) error
@@ -7,7 +9,7 @@ type Login interface {
 }
 
 type Watcher interface {
-	Watchlist() error
+	Watchlist() ([]User, error)
 	Feed(int) ([]Submission, error)
 }
 
@@ -15,7 +17,27 @@ type Gallery interface {
 	Posts(offset int) error
 }
 
-type Submission interface {
+type User interface {
 	ID() string
+	Name() string
+}
+
+type Submission interface {
+	// What site does this submission come from
+	SiteName() string
+	// What folder is the submission in? i.e scraps or empty
+	Folder() string
+
+	// A unique ID for this submission
+	ID() string
+	// The filename of the submission
+	Filename() string
+
+	// The full url of the submission file
 	FileURL() string
+
+	// File download
+	Download() (io.ReadCloser, error)
+
+	User() User
 }

@@ -4,14 +4,38 @@ import (
 	"fmt"
 	"io"
 	"log"
+
+	"github.com/kycklingar/FurLoaderGO/dli"
 )
 
 type ibSub struct {
 	id       string
-	username string
 	fileName string
 	url      string
 	fileURL  string
+
+	user user
+}
+
+func (s *ibSub) SiteName() string {
+	return "inkbunny.net"
+}
+
+func (s *ibSub) Folder() string {
+	//TODO:
+	return ""
+}
+
+func (s *ibSub) ID() string {
+	return fmt.Sprint(s.id)
+}
+
+func (s *ibSub) Filename() string {
+	return s.fileName
+}
+
+func (s *ibSub) FileURL() string {
+	return s.fileURL
 }
 
 func (s *ibSub) Download() (io.ReadCloser, error) {
@@ -30,10 +54,6 @@ func (s *ibSub) Download() (io.ReadCloser, error) {
 	return res.Body, nil
 }
 
-func (s *ibSub) ID() string {
-	return fmt.Sprint(s.id)
-}
-
-func (s *ibSub) FileURL() string {
-	return s.fileURL
+func (s *ibSub) User() dli.User {
+	return s.user
 }
