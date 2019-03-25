@@ -19,7 +19,7 @@ func TestInkbunnyLogin(t *testing.T) {
 		t.Error("Expecting an error")
 	}
 
-	if err := i.LoginCookies(sid); err != nil {
+	if err := i.SetCookies(sid); err != nil {
 		t.Error(err)
 	}
 }
@@ -31,7 +31,7 @@ func TestInkbunnySearch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	subs, err := i.Feed(1)
+	subs, err := i.Posts("ninata", 1)
 	if err != nil {
 		t.Fatal(err)
 	}

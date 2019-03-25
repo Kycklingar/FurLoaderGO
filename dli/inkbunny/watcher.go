@@ -81,12 +81,8 @@ func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
 			log.Println(err)
 			return nil, err
 		}
-		r := make([]dli.Submission, len(s))
-		for i, v := range s {
-			r[i] = &v
-		}
 
-		subs = append(subs, r...)
+		subs = append(subs, &s)
 	}
 
 	return subs, nil

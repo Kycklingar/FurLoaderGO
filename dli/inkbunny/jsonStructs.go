@@ -26,6 +26,12 @@ type ibJsonLogin struct {
 
 type ibJsonSearch struct {
 	ibJsonError
+	Rid string `json:"rid"`
+	ibJsonSubmissions
+}
+
+type ibJsonSubmissions struct {
+	ibJsonError
 	Submissions []ibJsonSub `json:"submissions"`
 }
 
@@ -33,7 +39,7 @@ type ibJsonSub struct {
 	SubID     string `json:"submission_id"`
 	Username  string `json:"username"`
 	FileName  string `json:"file_name"`
-	FileURL   string `json:"file_url"`
+	FileURL   string `json:"file_url_full"`
 	PageCount string `json:"pagecount"`
 	Scraps    string `json:"scraps"`
 
@@ -79,6 +85,17 @@ func (i *ibJsonSearch) decode(r io.Reader) error {
 }
 
 func (i *ibJsonWatchlist) decode(r io.Reader) error {
+	if err := json.NewDecoder(r).Decode(&i); err != nil {
+		return err
+	}
+
+	if len(i.ErrorMessage) > 0 {
+		return fmt.Errorf("%d %s", i.ErrorCode, i.ErrorMessage)
+	}
+	return nil
+}
+
+func (i *ibJsonSubmissions) decode(r io.Reader) error {
 	if err := json.NewDecoder(r).Decode(&i); err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-
+	log.SetFlags(log.Llongfile)
 	username := flag.String("username", "", "Your username")
 	password := flag.String("password", "", "Your password")
 	cookies := flag.String("cookies", "", "Use instead of logging in")
@@ -48,5 +48,8 @@ func main() {
 	}
 
 	fmt.Printf("Found %d posts in %s gallery", len(posts), *user)
+
+	q := Queue(posts)
+	q.start()
 
 }

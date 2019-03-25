@@ -44,12 +44,7 @@ func (ib *InkBunny) Posts(userID string, offset int) ([]dli.Submission, error) {
 			return nil, err
 		}
 
-		dsubs := make([]dli.Submission, len(s))
-		for i, sub := range s {
-			dsubs[i] = &sub
-		}
-
-		subs = append(subs, dsubs...)
+		subs = append(subs, &s)
 	}
 
 	return subs, nil

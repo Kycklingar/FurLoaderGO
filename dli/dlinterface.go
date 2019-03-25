@@ -39,7 +39,10 @@ type Submission interface {
 	// File download
 	Download() (io.ReadCloser, error)
 	// Download the submission details
-	GetDetails() error
+	// this method can spawn additional
+	// submissions/files which are nested within
+	// the original submission
+	GetDetails() ([]Submission, error)
 
 	User() User
 }
