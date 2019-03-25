@@ -18,8 +18,8 @@ func main() {
 
 	flag.Parse()
 
-	var ibl = dli.Logins[0]
-	var ibg = dli.Galleries[0]
+	var ibl = dli.Logins["inkbunny"]
+	var ibg = dli.Galleries["inkbunny"]
 
 	if *cookies != "" {
 		err := ibl.SetCookies(*cookies)

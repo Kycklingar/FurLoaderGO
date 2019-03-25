@@ -20,6 +20,8 @@ type ibSub struct {
 	pageCount int
 
 	user user
+
+	ib *InkBunny
 }
 
 func (s *ibSub) SiteName() string {
@@ -60,7 +62,7 @@ func (s *ibSub) Download() (io.ReadCloser, error) {
 
 func (s *ibSub) GetDetails() ([]dli.Submission, error) {
 	if s.pageCount > 1 {
-		subs, err := inkbunny.getFileUrls(s.id)
+		subs, err := s.ib.getFileUrls(s.id)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -82,6 +84,8 @@ func (s *ibSub) User() dli.User {
 
 func (ib *InkBunny) fromJson(j ibJsonSub) (ibSub, error) {
 	var s ibSub
+
+	s.ib = ib
 
 	s.id = j.SubID
 	s.user.name = j.Username
@@ -136,6 +140,7 @@ func (ib *InkBunny) getFileUrls(id string) ([]ibSub, error) {
 
 	for _, file := range a.Submissions[0].Files {
 		var s ibSub
+		s.ib = ib
 		s.user.name = a.Submissions[0].Username
 		s.id = fmt.Sprintf("s%sf%s", id, file.FileID)
 		s.fileURL = file.FileURL

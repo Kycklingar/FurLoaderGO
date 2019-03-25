@@ -1,7 +1,7 @@
 package dli
 
-var Logins []Login
+var Logins = make(map[string]Login)
 
-var Watchers []Watcher
+var Watchers = make(map[string]Watcher)
 
-var Galleries []Gallery
+var Galleries = make(map[string]Gallery)
