@@ -35,6 +35,7 @@ type ibJsonSub struct {
 	FileName  string `json:"file_name"`
 	FileURL   string `json:"file_url"`
 	PageCount string `json:"pagecount"`
+	Scraps    string `json:"scraps"`
 
 	Files []ibJsonFiles `json:"files"`
 }

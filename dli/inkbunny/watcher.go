@@ -48,8 +48,8 @@ func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
 	v := ib.sidURLValues()
 	v.Set("page", fmt.Sprint(page))
 
-	if rid := ib.ridMap[fmt.Sprint("FEED", page)]; rid != nil {
-		v.Set("rid", *rid)
+	if rid, ok := ib.ridMap[fmt.Sprint("FEED", page)]; ok {
+		v.Set("rid", rid)
 	} else {
 		v.Set("unread_submissions", "yes")
 		v.Set("get_rid", "yes")
@@ -76,30 +76,17 @@ func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
 	var subs []dli.Submission
 
 	for _, sub := range se.Submissions {
-		v, err := strconv.Atoi(sub.PageCount)
+		s, err := ib.fromJson(sub)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		if v > 1 {
-			s, err := ib.getFileUrls(sub.SubID)
-			if err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			r := make([]dli.Submission, len(s))
-			for i, v := range s {
-				r[i] = &v
-			}
-			subs = append(subs, r...)
-		} else {
-			var s ibSub
-			s.user.name = sub.Username
-			s.fileName = sub.FileName
-			s.fileURL = sub.FileURL
-			subs = append(subs, &s)
+		r := make([]dli.Submission, len(s))
+		for i, v := range s {
+			r[i] = &v
 		}
+
+		subs = append(subs, r...)
 	}
 
 	return subs, nil

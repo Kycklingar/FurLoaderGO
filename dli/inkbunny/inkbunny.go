@@ -1,7 +1,6 @@
 package inkbunny
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,7 +9,7 @@ import (
 type InkBunny struct {
 	sid string
 
-	ridMap map[string]*string
+	ridMap map[string]string
 }
 
 var client http.Client
@@ -90,39 +89,4 @@ func (ib *InkBunny) checkLogin() error {
 	}
 
 	return nil
-}
-
-func (ib *InkBunny) getFileUrls(id string) ([]ibSub, error) {
-	v := ib.sidURLValues()
-	v.Set("submission_ids", fmt.Sprint(id))
-
-	res, err := client.PostForm(apiSubmissions, v)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	defer res.Body.Close()
-	if err = httpError(res); err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	var a ibJsonSearch
-	if err = a.decode(res.Body); err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	var subs []ibSub
-
-	for _, file := range a.Submissions[0].Files {
-		var s ibSub
-		s.user.name = a.Submissions[0].Username
-		s.id = fmt.Sprintf("s%sf%s", id, file.FileID)
-		s.fileURL = file.FileURL
-		s.fileName = file.FileName
-		subs = append(subs, s)
-	}
-
-	return subs, nil
 }

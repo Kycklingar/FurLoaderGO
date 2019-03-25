@@ -14,7 +14,7 @@ type Watcher interface {
 }
 
 type Gallery interface {
-	Posts(offset int) error
+	Posts(userID string, offset int) ([]Submission, error)
 }
 
 type User interface {
@@ -38,6 +38,8 @@ type Submission interface {
 
 	// File download
 	Download() (io.ReadCloser, error)
+	// Download the submission details
+	GetDetails() error
 
 	User() User
 }

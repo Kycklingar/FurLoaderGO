@@ -13,6 +13,10 @@ type queue struct {
 	submissions []dli.Submission
 }
 
+func Queue(submissions []dli.Submission) *queue {
+	return &queue{submissions: submissions}
+}
+
 var downloadPath = "downloads"
 
 func (q *queue) add(submissions ...dli.Submission) {
@@ -22,7 +26,14 @@ func (q *queue) add(submissions ...dli.Submission) {
 func (q *queue) start() {
 	for _, s := range q.submissions {
 		//TODO: Check the datastore if this submission already has been downloaded
-		err := q.download(s)
+
+		err := s.GetDetails()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		err = q.download(s)
 		if err != nil {
 			log.Println(err)
 			continue
