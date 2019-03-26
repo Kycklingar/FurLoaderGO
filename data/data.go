@@ -34,7 +34,7 @@ func (db *DB) Get(key string) string {
 	err := db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))
 		if err != nil {
-			log.Println(err)
+			//log.Println(err)
 			return err
 		}
 
@@ -47,7 +47,7 @@ func (db *DB) Get(key string) string {
 		return nil
 	})
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return ""
 	}
 	return value

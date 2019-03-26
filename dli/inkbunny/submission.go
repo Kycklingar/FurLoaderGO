@@ -69,8 +69,8 @@ func (s *ibSub) GetDetails() ([]dli.Submission, error) {
 		}
 
 		jsubs := make([]dli.Submission, len(subs))
-		for i, sub := range subs {
-			jsubs[i] = &sub
+		for i, _ := range subs {
+			jsubs[i] = &subs[i]
 		}
 
 		return jsubs, nil

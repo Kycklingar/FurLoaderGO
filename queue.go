@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/kycklingar/FurLoaderGO/dli"
 )
@@ -29,6 +30,15 @@ func (q *queue) start() {
 		//TODO: Check the datastore if this submission already has been downloaded
 		fmt.Println("Downloading:", s.ID())
 
+		dbkey := s.SiteName() + s.ID()
+		str := db.Get(dbkey)
+		if str != "" {
+			fmt.Printf("Found %s in database\n", dbkey)
+			continue
+		}
+
+		time.Sleep(time.Second * 2)
+
 		extra, err := s.GetDetails()
 		if err != nil {
 			log.Println(err)
@@ -36,11 +46,17 @@ func (q *queue) start() {
 		}
 
 		for _, esub := range extra {
+			fmt.Printf("Downloading extra submission %s\n", esub.ID())
+			if db.Get(esub.SiteName() + esub.ID()) != "" {
+				continue
+			}
 			err = q.download(esub)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
+			db.Store(esub.SiteName() + esub.ID(), esub.FileURL())
+			time.Sleep(time.Second * 2)
 		}
 
 		err = q.download(s)
@@ -48,6 +64,8 @@ func (q *queue) start() {
 			log.Println(err)
 			continue
 		}
+
+		db.Store(dbkey, s.FileURL())
 
 	}
 }

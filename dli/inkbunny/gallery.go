@@ -13,8 +13,10 @@ func (ib *InkBunny) Posts(userID string, offset int) ([]dli.Submission, error) {
 	rid, ok := ib.ridMap["gallery "+userID]
 	if ok {
 		v.Set("rid", rid)
+	} else {
+		v.Set("get_rid", "yes")
+		v.Set("username", userID)
 	}
-	v.Set("username", userID)
 	v.Set("page", fmt.Sprint(offset+1))
 
 	res, err := client.PostForm(apiSearch, v)
@@ -33,6 +35,10 @@ func (ib *InkBunny) Posts(userID string, offset int) ([]dli.Submission, error) {
 	if err = j.decode(res.Body); err != nil {
 		log.Println(err)
 		return nil, err
+	}
+
+	if offset + 1 > j.PagesCount {
+		return nil, nil
 	}
 
 	var subs []dli.Submission

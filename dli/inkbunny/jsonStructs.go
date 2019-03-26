@@ -27,6 +27,7 @@ type ibJsonLogin struct {
 type ibJsonSearch struct {
 	ibJsonError
 	Rid string `json:"rid"`
+	PagesCount int `json:"pages_count"`
 	ibJsonSubmissions
 }
 
