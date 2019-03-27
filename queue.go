@@ -12,61 +12,99 @@ import (
 )
 
 type queue struct {
-	submissions []dli.Submission
+	next chan dli.Submission
+	stop chan bool
+
+	threadCount int
 }
 
-func Queue(submissions []dli.Submission) *queue {
-	return &queue{submissions: submissions}
+func Queue() *queue {
+	return &queue{next: make(chan dli.Submission), stop: make(chan bool)}
 }
 
 var downloadPath = "downloads"
 
-func (q *queue) add(submissions ...dli.Submission) {
-	q.submissions = append(q.submissions, submissions...)
-}
+// TODO: improve this
+func (q *queue) addIncDL(call func(int) []dli.Submission) {
+	var i = 0
+	for {
+		subs := call(i)
+		i++
+		if len(subs) <= 0 {
+			break
+		}
 
-func (q *queue) start() {
-	for _, s := range q.submissions {
-		//TODO: Check the datastore if this submission already has been downloaded
-		fmt.Println("Downloading:", s.ID())
-
-		dbkey := s.SiteName() + s.ID()
-		str := db.Get(dbkey)
-		if str != "" {
-			fmt.Printf("Found %s in database\n", dbkey)
-			continue
+		for _, sub := range subs {
+			q.next <- sub
 		}
 
 		time.Sleep(time.Second * 2)
+	}
+}
 
-		extra, err := s.GetDetails()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
+// stopThread will stop one downloading thread from the queue
+func (q *queue) stopThread() {
+	q.stop <- true
+	q.threadCount--
+}
 
-		for _, esub := range extra {
-			fmt.Printf("Downloading extra submission %s\n", esub.ID())
-			if db.Get(esub.SiteName() + esub.ID()) != "" {
-				continue
+// This will stop all running downloading threads from the queue
+func (q *queue) stopAll() {
+	for q.threadCount > 0 {
+		q.stopThread()
+	}
+}
+
+// startThread will start one downloading thread on the queue
+func (q *queue) startThread() {
+	// I'm still learning, no bully
+	q.threadCount++
+	for {
+		select {
+		case <-q.stop:
+			fmt.Println("Stopping the queue")
+			return
+		case s := <-q.next:
+			{
+				fmt.Println("Downloading: ", s.ID())
+				dbkey := s.SiteName() + s.ID()
+				str := db.Get(dbkey)
+				if str != "" {
+					fmt.Printf("Found %s in database\n", dbkey)
+					continue
+				}
+
+				time.Sleep(time.Second * 2)
+
+				extra, err := s.GetDetails()
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				for _, esub := range extra {
+					fmt.Printf("Downloading extra submission %s\n", esub.ID())
+					if db.Get(esub.SiteName()+esub.ID()) != "" {
+						continue
+					}
+					err = q.download(esub)
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+					db.Store(esub.SiteName()+esub.ID(), esub.FileURL())
+					time.Sleep(time.Second * 2)
+				}
+
+				err = q.download(s)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				db.Store(dbkey, s.FileURL())
 			}
-			err = q.download(esub)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			db.Store(esub.SiteName() + esub.ID(), esub.FileURL())
-			time.Sleep(time.Second * 2)
 		}
-
-		err = q.download(s)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		db.Store(dbkey, s.FileURL())
-
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/kycklingar/FurLoaderGO/data"
 	"github.com/kycklingar/FurLoaderGO/dli"
@@ -57,23 +56,17 @@ func main() {
 		log.Fatal("No user gallery specified")
 	}
 
-	var i = *page
-	for {
-		posts, err := ibg.Posts(*user, i)
-		if len(posts) <= 0 {
-			break
-		}
-		i++
+	queue := Queue()
+	go queue.startThread()
+	go queue.startThread()
 
+	queue.addIncDL(func(i int) []dli.Submission {
+		posts, err := ibg.Posts(*user, i+*page-1)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return nil
 		}
 
-		fmt.Printf("Found %d posts in %s gallery \n", len(posts), *user)
-
-		q := Queue(posts)
-		q.start()
-		time.Sleep(time.Second * 3)
-	}
-
+		return posts
+	})
 }

@@ -37,7 +37,7 @@ func (ib *InkBunny) Posts(userID string, offset int) ([]dli.Submission, error) {
 		return nil, err
 	}
 
-	if offset + 1 > j.PagesCount {
+	if offset+1 > j.PagesCount {
 		return nil, nil
 	}
 
