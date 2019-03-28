@@ -30,6 +30,7 @@ func (q *queue) addIncDL(call func(int) []dli.Submission) {
 	for {
 		subs := call(i)
 		i++
+		fmt.Println(len(subs))
 		if len(subs) <= 0 {
 			break
 		}

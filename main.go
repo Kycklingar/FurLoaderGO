@@ -4,16 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/kycklingar/FurLoaderGO/data"
 	"github.com/kycklingar/FurLoaderGO/dli"
 	_ "github.com/kycklingar/FurLoaderGO/dli/inkbunny"
+	_ "github.com/kycklingar/FurLoaderGO/dli/furaffinity"
 )
 
 var db *data.DB
 
 func main() {
 	log.SetFlags(log.Llongfile)
+	site := flag.String("site", "", "Website")
 	username := flag.String("username", "", "Your username")
 	password := flag.String("password", "", "Your password")
 	cookies := flag.String("cookies", "", "Use instead of logging in")
@@ -22,11 +25,18 @@ func main() {
 
 	flag.Parse()
 
-	var ibl = dli.Logins["inkbunny"]
-	var ibg = dli.Galleries["inkbunny"]
+	if *site == "" {
+		log.Fatal("no site specified")
+	}
+
+	var ibl = dli.Logins[*site]
+	var ibg = dli.Galleries[*site]
 
 	db = data.OpenDB()
 
+	if ibl == nil {
+		log.Fatalf("%s does not implement Login", *site)
+	}
 	if *cookies != "" {
 		err := ibl.SetCookies(*cookies)
 		if err != nil {
@@ -37,10 +47,13 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		db.Store("cookies:inkbunny", ibl.GetCookies())
+		cookies := ibl.GetCookies()
+		//fmt.Println(cookies)
+		db.Store(fmt.Sprintf("cookies:%s", *site), cookies)
+		os.Exit(1)
 	} else {
 		// Use stored cookkies if exists
-		cookies := db.Get("cookies:inkbunny")
+		cookies := db.Get(fmt.Sprintf("cookies:%s", *site))
 		if cookies == "" {
 			log.Fatal("no cookies, pleases login first")
 		}
@@ -56,9 +69,13 @@ func main() {
 		log.Fatal("No user gallery specified")
 	}
 
+	if ibg == nil {
+		log.Fatalf("%s doesn't implement Gallery", *site)
+	}
+
 	queue := Queue()
 	go queue.startThread()
-	go queue.startThread()
+	//go queue.startThread()
 
 	queue.addIncDL(func(i int) []dli.Submission {
 		posts, err := ibg.Posts(*user, i+*page-1)
