@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"path"
+	"strings"
 
 	"github.com/kycklingar/FurLoaderGO/dli"
 	"golang.org/x/net/html"
@@ -17,7 +18,7 @@ type submission struct {
 
 	scraps bool
 
-	fa *furaffinity
+	fa   *furaffinity
 	user user
 }
 
@@ -116,12 +117,9 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 			break
 		}
 
-		for c := gNode.FirstChild; c.FirstChild != nil; c = c.FirstChild {
-			if c.Type == html.TextNode {
-				fmt.Println(c)
-				s.scraps = c.Data == "Scraps"
-			}
-		}
+		titleNode := getNodeFollowingPattern(gNode, []string{"u", "s", "a"})
+
+		s.scraps = strings.TrimSpace(titleNode.FirstChild.Data) == "Scraps"
 	}
 
 	userNode := getNodeFollowingPattern(node, []string{"table", "tbody", "tr", "td", "a"})

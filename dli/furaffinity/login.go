@@ -82,7 +82,7 @@ func (fa *furaffinity) Login(username string, password string) error {
 		log.Println(err)
 		return err
 	}
-	//defer os.Remove(file.Name())
+	defer os.Remove(file.Name())
 	defer file.Close()
 
 	_, err = io.Copy(file, captchaRes.Body)

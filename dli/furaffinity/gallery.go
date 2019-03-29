@@ -14,12 +14,15 @@ import (
 func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error) {
 	nextPage, ok := fa.nextPage[userID]
 	if !ok {
-		nextPage = faGallery + userID + fmt.Sprint("/", offset+1)
+		nextPage = &page{
+			page:     offset + 1,
+			location: faGallery + userID + "/",
+		}
+
+		fa.nextPage[userID] = nextPage
 	}
 
-	//fmt.Println(nextPage)
-
-	res, err := fa.client.Get(nextPage)
+	res, err := fa.client.Get(nextPage.location + fmt.Sprint(nextPage.page))
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -65,27 +68,6 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 			}
 		}
 
-		//	var f func(*html.Node)
-		//	f = func(n *html.Node) {
-		//		if n.Type == html.ElementNode && n.Data == "a" {
-		//			for _, a := range n.Attr {
-		//				if a.Key == "href" {
-		//					// Clean '/view/12345/'
-		//					s.id, err = strconv.Atoi(a.Val[6 : len(a.Val)-1])
-		//					if err != nil {
-		//						log.Println("could not convert href to id:", a.Val)
-		//						return
-		//					}
-		//				}
-		//			}
-		//		}
-
-		//		for c := n.FirstChild; c != nil; c = c.NextSibling {
-		//			f(c)
-		//		}
-		//	}
-		//	f(subNode)
-
 		if s.id <= 0 {
 			log.Println("s.id == 0")
 			continue
@@ -93,6 +75,19 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 
 		subs = append(subs, &s)
 
+	}
+	if len(subs) <= 0 {
+		if strings.Contains(fa.nextPage[userID].location, "gallery") {
+			fa.nextPage[userID] = &page{
+				page:     nextPage.page - offset,
+				location: faScraps + userID + "/",
+			}
+			return fa.Posts(userID, offset)
+		} else {
+			return subs, nil
+		}
+	} else {
+		nextPage.page += 1
 	}
 	return subs, nil
 }
@@ -138,7 +133,7 @@ func getNodeID(n *html.Node, id string) *html.Node {
 
 func getNodeFollowingPattern(node *html.Node, tags []string) *html.Node {
 	var f func(*html.Node, int) *html.Node
-	f = func(n *html.Node, seq int) *html.Node{
+	f = func(n *html.Node, seq int) *html.Node {
 		if n.Type == html.ElementNode {
 			if n.Data == tags[seq] {
 				seq++

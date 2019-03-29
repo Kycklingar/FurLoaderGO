@@ -8,8 +8,8 @@ import (
 
 	"github.com/kycklingar/FurLoaderGO/data"
 	"github.com/kycklingar/FurLoaderGO/dli"
-	_ "github.com/kycklingar/FurLoaderGO/dli/inkbunny"
 	_ "github.com/kycklingar/FurLoaderGO/dli/furaffinity"
+	_ "github.com/kycklingar/FurLoaderGO/dli/inkbunny"
 )
 
 var db *data.DB
