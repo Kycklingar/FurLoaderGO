@@ -108,6 +108,7 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 	}
 
 	pchan := make(chan *html.Node)
+
 	go getNodeClasses(node, "minigallery-title", pchan)
 
 	for {
@@ -122,21 +123,54 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 		s.scraps = strings.TrimSpace(titleNode.FirstChild.Data) == "Scraps"
 	}
 
-	userNode := getNodeFollowingPattern(node, []string{"table", "tbody", "tr", "td", "a"})
-	if userNode == nil {
-		return nil, errors.New("usernode nil")
-	}
+	go getNodeClasses(node, "classic-submission-title", pchan)
 
-	//log.Println(userNode, userNode.FirstChild)
+	for {
+		gNode := <-pchan
 
-	for _, a := range userNode.Attr {
-		if a.Key == "href" {
-			s.user.id = a.Val[6 : len(a.Val)-1]
+		if gNode == nil {
+			break
 		}
-	}
-	s.user.name = userNode.FirstChild.Data
 
-	return nil, nil //errors.New("not ready")
+		var t bool
+		for _, a := range gNode.Attr {
+			if a.Key == "class" {
+				for _, class := range strings.Split(a.Val, " ") {
+					if class == "information" {
+						t = true
+						break
+					}
+				}
+				break
+			}
+		}
+
+		if !t {
+			continue
+		}
+
+		var child *html.Node
+
+		for c := gNode.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type == html.ElementNode && c.Data == "a" {
+				child = c
+			}
+		}
+
+		if child == nil || child.Type != html.ElementNode {
+			return nil, errors.New("child node is nil")
+		}
+
+		for _, a := range child.Attr {
+			if a.Key == "href" {
+				s.user.id = a.Val[6 : len(a.Val)-1]
+			}
+		}
+
+		s.user.name = child.FirstChild.Data
+	}
+
+	return nil, nil
 }
 
 func (s *submission) subURL() string {
