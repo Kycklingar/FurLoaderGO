@@ -46,7 +46,6 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 	}
 
 	pchan := make(chan *html.Node)
-	//go getNodeClasses(subsNode, "t-image", pchan)
 	go getNodeElements(subsNode, "figure", pchan)
 
 	subs := fa.getSubsFromGalleryPage(pchan)

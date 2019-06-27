@@ -24,6 +24,7 @@ func main() {
 	page := flag.Int("page", 0, "Start the search from this page")
 	user := flag.String("user", "", "Gallery of user you want to download from")
 	feed := flag.Bool("feed", false, "Download your feed")
+	ignoreLatestFeedPost := flag.Bool("ignore-lfp", false, "Ignore the latest feed post in storage")
 	feedMaxPages := flag.Int("feed-max", 5, "Max pages to download from your feed")
 	login := flag.Bool("login", false, "Perform a login")
 
@@ -68,8 +69,14 @@ func main() {
 		queue := Queue()
 		go queue.startThread()
 
-		latestFeedPost := db.Get(fmt.Sprintf("LatestFeedPost:%s", *site))
-		fmt.Println("LFP: ", latestFeedPost)
+		var latestFeedPost string
+
+		if !*ignoreLatestFeedPost {
+			latestFeedPost = db.Get(fmt.Sprintf("LatestFeedPost:%s", *site))
+			fmt.Println("LFP: ", latestFeedPost)
+		} else {
+			fmt.Println("Ignoring LFP")
+		}
 
 		var lfpFound bool
 		var newLfp string

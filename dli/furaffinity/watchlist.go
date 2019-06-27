@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/kycklingar/FurLoaderGO/dli"
 	"golang.org/x/net/html"
@@ -87,6 +88,7 @@ func (f *feed) NextPage() ([]dli.Submission, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+	f.nextPage = ""
 
 	if err = httpError(res); err != nil {
 		log.Println(err)
@@ -99,19 +101,35 @@ func (f *feed) NextPage() ([]dli.Submission, error) {
 		return nil, err
 	}
 
-	ch := make(chan *html.Node)
-	go getNodeClasses(node, "more", ch)
-	for {
-		pnode := <-ch
-		if pnode == nil {
-			break
-		}
+	getNextPage := func(pch chan *html.Node) string {
+		var ret string
+		for {
+			pnode := <-pch
+			if pnode == nil {
+				break
+			}
 
-		for _, attr := range pnode.Attr {
-			if attr.Key == "href" {
-				f.nextPage = faBase + attr.Val
+			for _, attr := range pnode.Attr {
+				if attr.Key == "class" && strings.Contains(attr.Val, "prev") {
+					break
+				}
+
+				if attr.Key == "href" {
+					ret = faBase + attr.Val
+				}
 			}
 		}
+		return ret
+	}
+
+	ch := make(chan *html.Node)
+
+	go getNodeClasses(node, "more", ch)
+	f.nextPage = getNextPage(ch)
+
+	if f.nextPage == "" {
+		go getNodeClasses(node, "more-half", ch)
+		f.nextPage = getNextPage(ch)
 	}
 
 	subsNode := getNodeID(node, "messagecenter-submissions")
