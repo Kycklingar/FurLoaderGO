@@ -91,15 +91,48 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 		log.Println(err)
 		return nil, err
 	}
-	imgNode := getNodeID(node, "submissionImg")
-	if imgNode == nil {
-		return nil, errors.New("could not find the image html node")
-	}
 
-	for _, a := range imgNode.Attr {
-		if a.Key == "data-fullview-src" {
-			s.fileURL = "https:" + a.Val
+	//imgNode := getNodeID(node, "submissionImg")
+	//if imgNode == nil {
+	//	return nil, errors.New("could not find the image html node")
+	//}
+
+	//for _, a := range imgNode.Attr {
+	//	if a.Key == "data-fullview-src" {
+	//		s.fileURL = "https:" + a.Val
+	//		break
+	//	}
+	//}
+
+	pchan := make(chan *html.Node)
+	go getNodeClassesFull(node, "alt1 actions aligncenter", pchan)
+
+	for {
+		pnode, done := <-pchan
+		if !done {
 			break
+		}
+
+		var f func(*html.Node) *html.Node
+
+		f = func(n *html.Node) *html.Node{
+			if n.Type == html.TextNode && n.Data == "Download" {
+				return n
+			}
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				nn := f(c)
+				if nn != nil {
+					return nn
+				}
+			}
+
+			return nil
+		}
+
+		for _, attr := range f(pnode).Parent.Attr {
+			if attr.Key == "href" {
+				s.fileURL = "https:" + attr.Val
+			}
 		}
 	}
 
@@ -107,7 +140,7 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 		return nil, errors.New("file url could not be located")
 	}
 
-	pchan := make(chan *html.Node)
+	pchan = make(chan *html.Node)
 
 	go getNodeClasses(node, "minigallery-title", pchan)
 
