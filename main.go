@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/kycklingar/FurLoaderGO/data"
 	"github.com/kycklingar/FurLoaderGO/dli"
@@ -29,7 +30,12 @@ func main() {
 	flag.Parse()
 
 	if *site == "" {
-		log.Fatal("no site specified")
+		fmt.Println("no site specified")
+		fmt.Println("Sites available:")
+		for key, _ := range dli.Galleries {
+			fmt.Println(key)
+		}
+		os.Exit(0)
 	}
 
 	db = data.OpenDB()
