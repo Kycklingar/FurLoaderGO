@@ -8,7 +8,7 @@ import (
 	"github.com/kycklingar/FurLoaderGO/dli"
 )
 
-func (ib *InkBunny) Watchlist() ([]dli.User, error) {
+func (ib *InkBunny) Watchlist(string) ([]dli.User, error) {
 	v := ib.sidURLValues()
 	res, err := client.PostForm(apiWatchlist, v)
 	if err != nil {
@@ -44,11 +44,18 @@ func (ib *InkBunny) Watchlist() ([]dli.User, error) {
 	return users, nil
 }
 
-func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
-	v := ib.sidURLValues()
-	v.Set("page", fmt.Sprint(page))
+type feed struct {
+	ib *InkBunny
 
-	if rid, ok := ib.ridMap[fmt.Sprint("FEED", page)]; ok {
+	page int
+}
+
+func (f *feed) NextPage() ([]dli.Submission, error) {
+	v := f.ib.sidURLValues()
+	v.Set("page", fmt.Sprint(f.page))
+	f.page++
+
+	if rid, ok := f.ib.ridMap[fmt.Sprint("FEED", f.page)]; ok {
 		v.Set("rid", rid)
 	} else {
 		v.Set("unread_submissions", "yes")
@@ -76,7 +83,7 @@ func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
 	var subs []dli.Submission
 
 	for _, sub := range se.Submissions {
-		s, err := ib.fromJson(sub)
+		s, err := f.ib.fromJson(sub)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -86,4 +93,9 @@ func (ib *InkBunny) Feed(page int) ([]dli.Submission, error) {
 	}
 
 	return subs, nil
+}
+
+func (ib *InkBunny) Feed() dli.Feed {
+	f := feed{ib, 1}
+	return &f
 }

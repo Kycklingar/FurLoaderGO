@@ -67,11 +67,11 @@ func (q *queue) startThread() {
 			return
 		case s := <-q.next:
 			{
-				fmt.Println("Downloading: ", s.ID())
+				fmt.Print("Downloading: ", s.ID())
 				dbkey := s.SiteName() + s.ID()
 				str := db.Get(dbkey)
 				if str != "" {
-					fmt.Printf("Found %s in database\n", dbkey)
+					fmt.Printf("\nFound %s in database\n", dbkey)
 					continue
 				}
 
@@ -82,6 +82,8 @@ func (q *queue) startThread() {
 					log.Println(err)
 					continue
 				}
+
+				fmt.Printf(" by %s\n", s.User().Name())
 
 				for _, esub := range extra {
 					fmt.Printf("Downloading extra submission %s\n", esub.ID())

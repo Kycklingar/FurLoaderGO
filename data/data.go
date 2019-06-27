@@ -22,6 +22,10 @@ func OpenDB() *DB {
 	return &DB{db}
 }
 
+func (db *DB) CloseDB() {
+	db.Close()
+}
+
 func (db *DB) Store(key, value string) error {
 	return db.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(key), []byte(value))

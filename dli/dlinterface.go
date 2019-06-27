@@ -9,8 +9,12 @@ type Login interface {
 }
 
 type Watcher interface {
-	Watchlist() ([]User, error)
-	Feed(int) ([]Submission, error)
+	Watchlist(string) ([]User, error)
+	Feed() Feed
+}
+
+type Feed interface {
+	NextPage() ([]Submission, error)
 }
 
 type Gallery interface {

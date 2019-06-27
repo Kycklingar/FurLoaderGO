@@ -32,12 +32,18 @@ const (
 	faGallery    = faBase + "gallery/"
 	faScraps     = faBase + "scraps/"
 	faSubmission = faBase + "view/"
+	faFeed       = faBase + "msg/submissions/"
+)
+
+var (
+	faWatchlist = func(user string) string { return faBase + "watchlist/by/" + user }
 )
 
 func init() {
 	var fa = NewFurAffinity()
 	dli.Logins["furaffinity"] = fa
 	dli.Galleries["furaffinity"] = fa
+	dli.Watchers["furaffinity"] = fa
 }
 
 func httpError(res *http.Response) error {

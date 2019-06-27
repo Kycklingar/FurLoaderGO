@@ -46,8 +46,27 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 	}
 
 	pchan := make(chan *html.Node)
-	go getNodeClasses(subsNode, "t-image", pchan)
+	//go getNodeClasses(subsNode, "t-image", pchan)
+	go getNodeElements(subsNode, "figure", pchan)
 
+	subs := fa.getSubsFromGalleryPage(pchan)
+
+	if len(subs) <= 0 {
+		if strings.Contains(fa.nextPage[userID].location, "gallery") {
+			fa.nextPage[userID] = &page{
+				page:     nextPage.page - offset,
+				location: faScraps + userID + "/",
+			}
+			return fa.Posts(userID, offset)
+		}
+	} else {
+		nextPage.page += 1
+	}
+
+	return subs, nil
+}
+
+func (fa *furaffinity) getSubsFromGalleryPage(pchan chan *html.Node) []dli.Submission {
 	var subs []dli.Submission
 	for {
 		subNode := <-pchan
@@ -61,6 +80,7 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 		for _, a := range subNode.Attr {
 			if a.Key == "id" {
 				// Clean '/view/12345/'
+				var err error
 				s.id, err = strconv.Atoi(a.Val[4:])
 				if err != nil {
 					log.Println("could not convert href to id:", a.Val)
@@ -76,20 +96,22 @@ func (fa *furaffinity) Posts(userID string, offset int) ([]dli.Submission, error
 		subs = append(subs, &s)
 
 	}
-	if len(subs) <= 0 {
-		if strings.Contains(fa.nextPage[userID].location, "gallery") {
-			fa.nextPage[userID] = &page{
-				page:     nextPage.page - offset,
-				location: faScraps + userID + "/",
-			}
-			return fa.Posts(userID, offset)
-		} else {
-			return subs, nil
+
+	return subs
+}
+
+func getNodeElements(node *html.Node, element string, ch chan *html.Node) {
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == element {
+			ch <- n
 		}
-	} else {
-		nextPage.page += 1
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
 	}
-	return subs, nil
+	f(node)
+	ch <- nil
 }
 
 func getNodeClasses(node *html.Node, class string, ch chan *html.Node) {
