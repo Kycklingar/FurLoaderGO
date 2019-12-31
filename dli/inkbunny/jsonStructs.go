@@ -43,6 +43,7 @@ type ibJsonSub struct {
 	FileURL   string `json:"file_url_full"`
 	PageCount string `json:"pagecount"`
 	Scraps    string `json:"scraps"`
+	LastFileUpdate string `json:"last_file_update_datetime"`
 
 	Files []ibJsonFiles `json:"files"`
 }

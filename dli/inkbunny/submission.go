@@ -17,6 +17,8 @@ type ibSub struct {
 	fileURL  string
 	folder   string
 
+	lastFileUpdate string
+
 	pageCount int
 
 	user user
@@ -33,7 +35,7 @@ func (s *ibSub) Folder() string {
 }
 
 func (s *ibSub) ID() string {
-	return s.id
+	return s.id + ":" + s.lastFileUpdate
 }
 
 func (s *ibSub) Filename() string {
@@ -91,6 +93,7 @@ func (ib *InkBunny) fromJson(j ibJsonSub) (ibSub, error) {
 	s.user.name = j.Username
 	s.fileName = j.FileName
 	s.fileURL = j.FileURL
+	s.lastFileUpdate = j.LastFileUpdate
 	s.folder = "gallery"
 	if j.Scraps == "t" {
 		s.folder = "scraps"

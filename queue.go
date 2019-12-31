@@ -16,6 +16,7 @@ type queue struct {
 	stop chan bool
 
 	threadCount int
+	inProgress  int
 }
 
 func Queue() *queue {
@@ -66,13 +67,14 @@ func (q *queue) startThread() {
 			fmt.Println("Stopping the queue")
 			return
 		case s := <-q.next:
-			{
+			q.inProgress++
+			func() {
 				fmt.Print("Downloading: ", s.ID())
 				dbkey := s.SiteName() + s.ID()
 				str := db.Get(dbkey)
 				if str != "" {
 					fmt.Printf("\nFound %s in database\n", dbkey)
-					continue
+					return
 				}
 
 				time.Sleep(time.Second * 2)
@@ -80,7 +82,7 @@ func (q *queue) startThread() {
 				extra, err := s.GetDetails()
 				if err != nil {
 					log.Println(err)
-					continue
+					return
 				}
 
 				fmt.Printf(" by %s\n", s.User().Name())
@@ -88,12 +90,12 @@ func (q *queue) startThread() {
 				for _, esub := range extra {
 					fmt.Printf("Downloading extra submission %s\n", esub.ID())
 					if db.Get(esub.SiteName()+esub.ID()) != "" {
-						continue
+						return
 					}
 					err = q.download(esub)
 					if err != nil {
 						log.Println(err)
-						continue
+						return
 					}
 					db.Store(esub.SiteName()+esub.ID(), esub.FileURL())
 					time.Sleep(time.Second * 2)
@@ -102,11 +104,12 @@ func (q *queue) startThread() {
 				err = q.download(s)
 				if err != nil {
 					log.Println(err)
-					continue
+					return
 				}
 
 				db.Store(dbkey, s.FileURL())
-			}
+			}()
+			q.inProgress--
 		}
 	}
 }

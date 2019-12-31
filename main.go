@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/kycklingar/FurLoaderGO/data"
 	"github.com/kycklingar/FurLoaderGO/dli"
@@ -132,7 +133,7 @@ func main() {
 		go queue.startThread()
 
 		queue.addIncDL(func(i int) []dli.Submission {
-			posts, err := ibg.Posts(*user, i+*page-1)
+			posts, err := ibg.Posts(*user, i+*page)
 			if err != nil {
 				log.Println(err)
 				return nil
@@ -140,6 +141,9 @@ func main() {
 
 			return posts
 		})
+		for queue.inProgress > 0 {
+			time.Sleep(10)
+		}
 	}
 
 }

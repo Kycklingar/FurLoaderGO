@@ -115,7 +115,7 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 
 		var f func(*html.Node) *html.Node
 
-		f = func(n *html.Node) *html.Node{
+		f = func(n *html.Node) *html.Node {
 			if n.Type == html.TextNode && n.Data == "Download" {
 				return n
 			}
