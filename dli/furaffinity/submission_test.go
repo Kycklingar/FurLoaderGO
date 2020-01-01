@@ -22,8 +22,8 @@ func TestSubmission(t *testing.T) {
 		t.Error("sub name is: ", sub.user.name, "want: S-Nina")
 	}
 
-	if sub.fileURL != "https://d.facdn.net/art/s-nina/1559057227/1559057220.s-nina_mihari.png" {
-		t.Error("sub fileURL is: ", sub.fileURL, "want: https://d.facdn.net/art/s-nina/1559057227/1559057220.s-nina_mihari.png")
+	if sub.fileURL != "https://d.facdn.net/download/art/s-nina/1559057227/1559057220.s-nina_mihari.png" {
+		t.Error("sub fileURL is: ", sub.fileURL, "want: https://d.facdn.net/download/art/s-nina/1559057227/1559057220.s-nina_mihari.png")
 	}
 
 	if sub.scraps {

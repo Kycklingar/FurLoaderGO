@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"path"
-	"strings"
 
 	"github.com/kycklingar/FurLoaderGO/dli"
 	"golang.org/x/net/html"
@@ -104,32 +103,21 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 	//	}
 	//}
 
+	// Get file link
 	pchan := make(chan *html.Node)
-	go getNodeClassesFull(node, "alt1 actions aligncenter", pchan)
+	go getNodeClasses(node, "download", pchan)
 
 	for {
-		pnode, done := <-pchan
-		if !done {
+		pnode := <-pchan
+		if pnode == nil {
 			break
 		}
 
-		var f func(*html.Node) *html.Node
-
-		f = func(n *html.Node) *html.Node {
-			if n.Type == html.TextNode && n.Data == "Download" {
-				return n
-			}
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				nn := f(c)
-				if nn != nil {
-					return nn
-				}
-			}
-
-			return nil
+		if pnode.FirstChild == nil {
+			break
 		}
 
-		for _, attr := range f(pnode).Parent.Attr {
+		for _, attr := range pnode.FirstChild.Attr {
 			if attr.Key == "href" {
 				s.fileURL = "https:" + attr.Val
 			}
@@ -140,46 +128,32 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 		return nil, errors.New("file url could not be located")
 	}
 
+	// It's impossible to tell if a submission is a scrap or not in the new FA design
+	s.scraps = false
+	//pchan = make(chan *html.Node)
+	//go getNodeClasses(node, "minigallery-title", pchan)
+
+	//for {
+	//	gNode := <-pchan
+
+	//	if gNode == nil {
+	//		break
+	//	}
+
+	//	titleNode := getNodeFollowingPattern(gNode, []string{"u", "s", "a"})
+
+	//	s.scraps = strings.TrimSpace(titleNode.FirstChild.Data) == "Scraps"
+	//}
+
+	// Get username and user id
 	pchan = make(chan *html.Node)
-
-	go getNodeClasses(node, "minigallery-title", pchan)
-
-	for {
-		gNode := <-pchan
-
-		if gNode == nil {
-			break
-		}
-
-		titleNode := getNodeFollowingPattern(gNode, []string{"u", "s", "a"})
-
-		s.scraps = strings.TrimSpace(titleNode.FirstChild.Data) == "Scraps"
-	}
-
-	go getNodeClasses(node, "classic-submission-title", pchan)
+	go getNodeClasses(node, "submission-id-sub-container", pchan)
 
 	for {
 		gNode := <-pchan
 
 		if gNode == nil {
 			break
-		}
-
-		var t bool
-		for _, a := range gNode.Attr {
-			if a.Key == "class" {
-				for _, class := range strings.Split(a.Val, " ") {
-					if class == "information" {
-						t = true
-						break
-					}
-				}
-				break
-			}
-		}
-
-		if !t {
-			continue
 		}
 
 		var child *html.Node
@@ -187,6 +161,7 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 		for c := gNode.FirstChild; c != nil; c = c.NextSibling {
 			if c.Type == html.ElementNode && c.Data == "a" {
 				child = c
+				break
 			}
 		}
 
@@ -200,7 +175,7 @@ func (s *submission) GetDetails() ([]dli.Submission, error) {
 			}
 		}
 
-		s.user.name = child.FirstChild.Data
+		s.user.name = child.FirstChild.FirstChild.Data
 	}
 
 	return nil, nil
